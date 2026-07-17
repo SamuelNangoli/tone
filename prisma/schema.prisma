@@ -1,0 +1,130 @@
+// Tone — data model
+//
+// Local dev uses SQLite so the app runs with zero external services.
+// The schema is written to be Postgres/Supabase-compatible: switch the
+// datasource provider to "postgresql" and set DATABASE_URL to your Supabase
+// connection string. Enum-like fields are strings and JSON payloads are
+// stored as text so both providers behave identically.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String
+  passwordHash String
+  // JSON: { theme: "light"|"dark"|"system", density: "comfortable"|"compact" }
+  prefs        String       @default("{}")
+  createdAt    DateTime     @default(now())
+  memberships  Membership[]
+  drafts       Draft[]
+}
+
+model Workspace {
+  id          String         @id @default(cuid())
+  name        String
+  slug        String         @unique
+  // Single configurable vertical — the app is niche-agnostic by design.
+  industry    String         @default("B2B SaaS")
+  accentColor String         @default("#6366f1")
+  createdAt   DateTime       @default(now())
+  memberships Membership[]
+  profiles    VoiceProfile[]
+  drafts      Draft[]
+}
+
+model Membership {
+  id          String    @id @default(cuid())
+  role        String // "owner" | "editor" | "viewer"
+  userId      String
+  workspaceId String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+}
+
+// The core asset. `data` holds the structured, user-editable voice profile:
+// { sliders: { formality, boldness, detail }, doWords[], dontWords[],
+//   audience, competitors[], websiteUrl, traits[] }
+model VoiceProfile {
+  id              String       @id @default(cuid())
+  workspaceId     String
+  name            String
+  description     String       @default("")
+  data            String       @default("{}")
+  // Voice accuracy indicator (0–100); improves with samples + feedback.
+  accuracy        Float        @default(52)
+  generationCount Int          @default(0)
+  feedbackCount   Int          @default(0)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  workspace       Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  samples         Sample[]
+  drafts          Draft[]
+  generations     Generation[]
+  feedback        Feedback[]
+}
+
+model Sample {
+  id        String       @id @default(cuid())
+  profileId String
+  title     String       @default("")
+  content   String
+  source    String       @default("pasted") // "pasted" | "url" | "feedback"
+  createdAt DateTime     @default(now())
+  profile   VoiceProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model Draft {
+  id          String       @id @default(cuid())
+  workspaceId String
+  profileId   String
+  authorId    String?
+  title       String
+  contentType String // "blog" | "linkedin" | "tweet" | "email" | "landing"
+  brief       String       @default("")
+  content     String       @default("")
+  status      String       @default("draft") // "draft" | "approved" | "published"
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  profile     VoiceProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  author      User?        @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  feedback    Feedback[]
+}
+
+model Generation {
+  id          String       @id @default(cuid())
+  profileId   String
+  contentType String
+  brief       String
+  // JSON array of { id, label, content }
+  variations  String       @default("[]")
+  createdAt   DateTime     @default(now())
+  profile     VoiceProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  feedback    Feedback[]
+}
+
+model Feedback {
+  id           String       @id @default(cuid())
+  profileId    String
+  generationId String?
+  draftId      String?
+  rating       String // "up" | "down"
+  note         String       @default("")
+  // When the user edits output and says "make it more like this",
+  // the edited text is stored and becomes a training sample.
+  editedText   String       @default("")
+  createdAt    DateTime     @default(now())
+  profile      VoiceProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  generation   Generation?  @relation(fields: [generationId], references: [id], onDelete: SetNull)
+  draft        Draft?       @relation(fields: [draftId], references: [id], onDelete: SetNull)
+}

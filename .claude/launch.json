@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "tone-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "C:\\Users\\HP\\OneDrive\\Desktop\\Projects\\tone",
+      "port": 3000
+    }
+  ]
+}
