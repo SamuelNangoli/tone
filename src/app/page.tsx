@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUserId } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { ToneMark } from "@/components/tone-logo";
 
 export default async function LandingPage() {
   if (await getUserId()) redirect("/app");
@@ -9,11 +10,8 @@ export default async function LandingPage() {
   return (
     <main className="flex-1">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-        <div className="flex items-center gap-2 font-semibold">
-          <span
-            className="inline-block size-3 rounded-full"
-            style={{ background: "var(--brand)" }}
-          />
+        <div className="flex items-center gap-2 text-lg font-semibold">
+          <ToneMark size={24} className="text-foreground" />
           Tone
         </div>
         <nav className="flex items-center gap-2">

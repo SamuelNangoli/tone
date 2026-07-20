@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ToneMark } from "@/components/tone-logo";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -37,7 +38,11 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center p-6">
+    <main className="flex flex-1 flex-col items-center justify-center gap-6 p-6">
+      <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
+        <ToneMark size={26} className="text-foreground" />
+        Tone
+      </Link>
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Create your workspace</CardTitle>

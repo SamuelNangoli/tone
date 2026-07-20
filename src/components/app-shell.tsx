@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useApp } from "@/components/app-context";
 import { AccuracyRing } from "@/components/accuracy-ring";
+import { ToneMark } from "@/components/tone-logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -39,8 +40,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b px-4 py-4">
-        <span className="inline-block size-3 rounded-full" style={{ background: "var(--brand)" }} />
+      <div className="flex items-center gap-2.5 border-b px-4 py-4">
+        <ToneMark size={26} className="shrink-0 text-foreground" />
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{workspace.name}</p>
           <p className="truncate text-xs text-muted-foreground">{workspace.industry}</p>

@@ -17,6 +17,24 @@ export const metadata: Metadata = {
   title: "Tone — Learn your voice once. Sound like yourself everywhere.",
   description:
     "AI writing for teams that hate sounding like AI. Tone builds a persistent brand voice profile and conditions every draft on it.",
+  applicationName: "Tone",
+  manifest: "/site.webmanifest",
+  openGraph: {
+    title: "Tone — Learn your voice once. Sound like yourself everywhere.",
+    description:
+      "AI writing for teams that hate sounding like AI. Tone builds a persistent brand voice profile and conditions every draft on it.",
+    siteName: "Tone",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Tone",
+    description: "Learn your voice once. Sound like yourself everywhere.",
+  },
+};
+
+export const viewport = {
+  themeColor: "#0D0D0C",
 };
 
 // Applies the saved theme before first paint to avoid a flash.
