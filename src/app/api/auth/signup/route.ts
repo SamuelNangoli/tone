@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { createSession } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 import { badRequest } from "@/lib/api";
 
 const schema = z.object({
@@ -29,17 +28,35 @@ export async function POST(request: Request) {
   if (existing)
     return badRequest("An account with that email already exists — sign in instead.");
 
+  const supabase = await createClient();
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+  if (signUpError) return badRequest(signUpError.message);
+  const authUser = signUpData.user;
+  if (!authUser) {
+    return badRequest("Check your inbox to confirm your email, then sign in.");
+  }
+  if (!signUpData.session) {
+    // Email confirmation is required by the Supabase project — no session
+    // cookie was issued yet, so we can't create the workspace as this user.
+    return badRequest(
+      "Account created — check your inbox to confirm your email before signing in."
+    );
+  }
+
   const base = slugify(company);
   let slug = base;
   for (let i = 2; await db.workspace.findUnique({ where: { slug } }); i++) {
     slug = `${base}-${i}`;
   }
 
-  const user = await db.user.create({
+  await db.user.create({
     data: {
+      id: authUser.id,
       name,
       email,
-      passwordHash: await bcrypt.hash(password, 10),
       memberships: {
         create: {
           role: "owner",
@@ -49,6 +66,5 @@ export async function POST(request: Request) {
     },
   });
 
-  await createSession(user.id);
   return NextResponse.json({ ok: true });
 }

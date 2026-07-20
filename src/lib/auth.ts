@@ -1,42 +1,13 @@
-import { cookies } from "next/headers";
-import { SignJWT, jwtVerify } from "jose";
+import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 
-const COOKIE = "tone_session";
-const secret = new TextEncoder().encode(
-  process.env.AUTH_SECRET ?? "tone-dev-secret"
-);
-
-export async function createSession(userId: string) {
-  const token = await new SignJWT({ sub: userId })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("30d")
-    .sign(secret);
-  const jar = await cookies();
-  jar.set(COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 30,
-  });
-}
-
-export async function destroySession() {
-  const jar = await cookies();
-  jar.delete(COOKIE);
-}
-
+/** Supabase-authenticated user id (== local User.id), or null if signed out. */
 export async function getUserId(): Promise<string | null> {
-  const jar = await cookies();
-  const token = jar.get(COOKIE)?.value;
-  if (!token) return null;
-  try {
-    const { payload } = await jwtVerify(token, secret);
-    return (payload.sub as string) ?? null;
-  } catch {
-    return null;
-  }
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user?.id ?? null;
 }
 
 export async function getUser() {
@@ -62,6 +33,11 @@ export async function getContext() {
     workspace: membership.workspace,
     role: membership.role,
   };
+}
+
+export async function destroySession() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
 }
 
 export function canEdit(role: string) {

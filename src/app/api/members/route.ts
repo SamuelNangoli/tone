@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 import { db } from "@/lib/db";
 import { getContext } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { badRequest, forbidden, unauthorized } from "@/lib/api";
 
 export async function GET() {
@@ -43,9 +43,18 @@ export async function POST(request: Request) {
   let user = await db.user.findUnique({ where: { email } });
   let tempPassword: string | null = null;
   if (!user) {
-    tempPassword = randomBytes(6).toString("base64url");
+    tempPassword = randomBytes(9).toString("base64url");
+    const admin = createAdminClient();
+    const { data, error } = await admin.auth.admin.createUser({
+      email,
+      password: tempPassword,
+      email_confirm: true,
+    });
+    if (error || !data.user) {
+      return badRequest(error?.message ?? "Couldn't create that teammate's account.");
+    }
     user = await db.user.create({
-      data: { name, email, passwordHash: await bcrypt.hash(tempPassword, 10) },
+      data: { id: data.user.id, name, email },
     });
   }
 

@@ -1,8 +1,38 @@
 // Seeds a realistic demo workspace: demo@tone.app / demo1234
 const { PrismaClient } = require("@prisma/client");
-const bcrypt = require("bcryptjs");
+const { createClient } = require("@supabase/supabase-js");
 
 const db = new PrismaClient();
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!supabaseUrl || !serviceRoleKey) {
+  console.error(
+    "Missing NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY — set them in .env before seeding."
+  );
+  process.exit(1);
+}
+const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
+
+/** Creates (or reuses) a Supabase auth user and returns its id. */
+async function ensureAuthUser(email, password) {
+  const { data, error } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+  });
+  if (!error) return data.user.id;
+  if (!/already registered/i.test(error.message)) throw error;
+
+  // Already exists — look it up (Admin API has no getUserByEmail helper).
+  const { data: list, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+  if (listError) throw listError;
+  const found = list.users.find((u) => u.email === email);
+  if (!found) throw new Error(`Could not find existing Supabase user for ${email}`);
+  return found.id;
+}
 
 const BLOG_SAMPLE = `Why "just add a dashboard" is how good products die
 
@@ -41,11 +71,12 @@ async function main() {
     return;
   }
 
+  const mayaAuthId = await ensureAuthUser("demo@tone.app", "demo1234");
   const user = await db.user.create({
     data: {
+      id: mayaAuthId,
       name: "Maya Chen",
       email: "demo@tone.app",
-      passwordHash: await bcrypt.hash("demo1234", 10),
       prefs: JSON.stringify({ theme: "system", density: "comfortable" }),
     },
   });
@@ -60,11 +91,12 @@ async function main() {
     },
   });
 
+  const jordanAuthId = await ensureAuthUser("jordan@northbeam.app", "demo1234");
   const editor = await db.user.create({
     data: {
+      id: jordanAuthId,
       name: "Jordan Reyes",
       email: "jordan@northbeam.app",
-      passwordHash: await bcrypt.hash("demo1234", 10),
     },
   });
   await db.membership.create({

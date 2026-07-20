@@ -15,16 +15,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// `id` mirrors the Supabase auth.users id (uuid) for the same account —
+// Supabase owns credentials/sessions, this table owns app-specific profile
+// and workspace membership data.
 model User {
-  id           String       @id @default(cuid())
-  email        String       @unique
-  name         String
-  passwordHash String
+  id          String       @id
+  email       String       @unique
+  name        String
   // JSON: { theme: "light"|"dark"|"system", density: "comfortable"|"compact" }
-  prefs        String       @default("{}")
-  createdAt    DateTime     @default(now())
-  memberships  Membership[]
-  drafts       Draft[]
+  prefs       String       @default("{}")
+  createdAt   DateTime     @default(now())
+  memberships Membership[]
+  drafts      Draft[]
 }
 
 model Workspace {
