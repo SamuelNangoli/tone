@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   PenLine,
   FileText,
@@ -135,7 +135,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { density, setDensity, theme, setTheme, focusMode, setFocusMode } = useApp();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const hideSidebar = collapsed || focusMode;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <TooltipProvider delay={300}>
@@ -224,8 +229,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   />
                 }
               >
-                <Sun className="size-4 dark:hidden" />
-                <Moon className="hidden size-4 dark:block" />
+                {mounted ? (
+                  <>
+                    <Sun className="size-4 dark:hidden" />
+                    <Moon className="hidden size-4 dark:block" />
+                  </>
+                ) : (
+                  // Render a placeholder to match server output
+                  <div className="size-4" />
+                )}
               </TooltipTrigger>
               <TooltipContent>Toggle light/dark</TooltipContent>
             </Tooltip>
