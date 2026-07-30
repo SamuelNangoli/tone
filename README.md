@@ -12,12 +12,51 @@ conditioned on the profile, and a feedback loop keeps sharpening it.
 ```bash
 npm install
 npx prisma db push     # creates the local SQLite database
-node prisma/seed.js    # optional: demo workspace
+# configure Supabase auth (see below) before signing in
 npm run dev
 ```
 
-Open http://localhost:3000 and sign in as **demo@tone.app / demo1234**
-(seeded), or sign up to walk through the voice-onboarding wizard.
+Open http://localhost:3000. The app runs even before Supabase is configured —
+the landing page loads and the login screen shows a "finish setup" banner. To
+actually sign in or sign up, set up Supabase auth first.
+
+## Authentication (Supabase)
+
+Auth is handled by **Supabase Auth**. The app needs three values in `.env`.
+Without valid keys you'll see a setup banner instead of being able to sign in
+(this is the fix for the old "internet error" — a missing/paused Supabase
+project no longer crashes every page).
+
+**Where to get the keys** — in the [Supabase dashboard](https://supabase.com/dashboard):
+
+1. Open your project (or create a free one). If it shows **"Paused"**, click
+   **Restore** — free projects auto-pause after ~1 week of inactivity, and a
+   paused project is unreachable, which is what caused the "internet error".
+2. Go to **Project Settings → API**.
+3. Copy these into `.env`:
+
+   ```ini
+   NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=<the "anon / public" key — a long JWT, ~220 chars>
+   SUPABASE_SERVICE_ROLE_KEY=<the "service_role" key — also a long JWT; server-only>
+   ```
+
+   Both keys are JWTs starting with `eyJ...`. If a value is under ~100
+   characters you copied the wrong field (likely the project ref, not the key).
+
+4. Restart the dev server so the new env is picked up.
+
+The `service_role` key bypasses row-level security and is only used server-side
+(inviting teammates, seeding). Never expose it to the client or commit it.
+
+### Seed a demo workspace (optional)
+
+`prisma/seed.js` creates the demo users in **both** Supabase Auth and the local
+database, so it needs the Supabase keys above set first:
+
+```bash
+node prisma/seed.js    # demo@tone.app / demo1234 + a teammate
+```
 
 ## AI provider
 

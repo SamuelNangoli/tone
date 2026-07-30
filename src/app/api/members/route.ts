@@ -4,6 +4,7 @@ import { randomBytes } from "crypto";
 import { db } from "@/lib/db";
 import { getContext } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getSupabaseEnv } from "@/lib/supabase/env";
 import { badRequest, forbidden, unauthorized } from "@/lib/api";
 
 export async function GET() {
@@ -43,6 +44,11 @@ export async function POST(request: Request) {
   let user = await db.user.findUnique({ where: { email } });
   let tempPassword: string | null = null;
   if (!user) {
+    if (!getSupabaseEnv().adminConfigured) {
+      return badRequest(
+        "Inviting new teammates needs the Supabase service-role key in .env (SUPABASE_SERVICE_ROLE_KEY)."
+      );
+    }
     tempPassword = randomBytes(9).toString("base64url");
     const admin = createAdminClient();
     const { data, error } = await admin.auth.admin.createUser({

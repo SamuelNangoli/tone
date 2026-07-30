@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToneMark } from "@/components/tone-logo";
+import { SetupBanner } from "@/components/setup-banner";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -43,6 +44,7 @@ export default function SignupPage() {
         <ToneMark size={26} className="text-foreground" />
         Tone
       </Link>
+      <SetupBanner />
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Create your workspace</CardTitle>

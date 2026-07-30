@@ -1,13 +1,21 @@
 import { createClient } from "@/lib/supabase/server";
+import { getSupabaseEnv } from "@/lib/supabase/env";
 import { db } from "@/lib/db";
 
 /** Supabase-authenticated user id (== local User.id), or null if signed out. */
 export async function getUserId(): Promise<string | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user?.id ?? null;
+  // If Supabase isn't configured, or is unreachable/paused, treat the request
+  // as signed-out rather than throwing — public pages must still render.
+  if (!getSupabaseEnv().configured) return null;
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return user?.id ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getUser() {
@@ -36,8 +44,13 @@ export async function getContext() {
 }
 
 export async function destroySession() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
+  if (!getSupabaseEnv().configured) return;
+  try {
+    const supabase = await createClient();
+    await supabase.auth.signOut();
+  } catch {
+    // Already effectively signed out if Supabase is unreachable.
+  }
 }
 
 export function canEdit(role: string) {

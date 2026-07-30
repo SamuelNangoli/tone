@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
+import { getSupabaseEnv, SUPABASE_SETUP_MESSAGE } from "@/lib/supabase/env";
 import { badRequest } from "@/lib/api";
 
 const schema = z.object({
@@ -20,6 +21,8 @@ function slugify(name: string) {
 }
 
 export async function POST(request: Request) {
+  if (!getSupabaseEnv().configured) return badRequest(SUPABASE_SETUP_MESSAGE);
+
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return badRequest("Check your details and try again.");
   const { name, email, password, company, industry } = parsed.data;
