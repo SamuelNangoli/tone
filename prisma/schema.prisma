@@ -11,8 +11,12 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Pooled (PgBouncer, port 6543) connection for the app at runtime — safe
+  // for serverless. `directUrl` (session pooler, port 5432) is used by
+  // `prisma db push` / migrations, which need a direct, non-pooled connection.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // `id` mirrors the Supabase auth.users id (uuid) for the same account —

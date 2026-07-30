@@ -24,7 +24,13 @@ async function ensureAuthUser(email, password) {
     email_confirm: true,
   });
   if (!error) return data.user.id;
-  if (!/already registered/i.test(error.message)) throw error;
+  // Supabase signals a duplicate via the `email_exists` code (newer) or an
+  // "already registered" message (older) — treat both as "reuse existing".
+  const alreadyExists =
+    error.code === "email_exists" ||
+    error.status === 422 ||
+    /already (registered|exists)/i.test(error.message);
+  if (!alreadyExists) throw error;
 
   // Already exists — look it up (Admin API has no getUserByEmail helper).
   const { data: list, error: listError } = await supabaseAdmin.auth.admin.listUsers();
